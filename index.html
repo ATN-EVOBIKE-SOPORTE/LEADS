@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evobike | Registro de Distribuidores</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green: #2b7a4b;
+            --green-dark: #1e5c38;
+            --green-light: #e8f5ee;
+            --gray-soft: #f4f6f4;
+        }
+
+        * { box-sizing: border-box; }
+        body { font-family: 'Montserrat', sans-serif; background: var(--gray-soft); min-height: 100vh; }
+
+        /* Fondo decorativo */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -200px; right: -200px;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(43,122,75,0.07) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Logo */
+        .logo-container { display: flex; align-items: center; gap: 10px; }
+        .leaf-icon { position: relative; width: 36px; height: 36px; }
+        .leaf { position: absolute; width: 13px; height: 26px; background: var(--green); border-radius: 100% 0% 100% 0%; }
+        .leaf-1 { left: 0; bottom: 0; opacity: 0.5; transform: scale(0.8) rotate(-25deg); }
+        .leaf-2 { left: 9px; bottom: 3px; opacity: 0.75; transform: scale(0.9) rotate(-10deg); }
+        .leaf-3 { left: 18px; bottom: 6px; transform: rotate(5deg); }
+        .logo-text { font-size: 28px; font-weight: 900; font-style: italic; color: var(--green); letter-spacing: -1.5px; }
+        .logo-subtext { font-size: 8px; font-weight: 700; letter-spacing: 2.5px; color: var(--green); text-transform: uppercase; margin-top: -6px; opacity: 0.7; }
+
+        /* Card */
+        .card { background: #fff; border-radius: 28px; box-shadow: 0 4px 40px rgba(43,122,75,0.08), 0 1px 3px rgba(0,0,0,0.04); border: 1px solid rgba(43,122,75,0.08); }
+
+        /* Steps */
+        .step { display: none; }
+        .step.active { display: block; animation: fadeIn 0.35s ease; }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+
+        /* Progress bar */
+        .progress-track { background: #e8f5ee; border-radius: 99px; height: 6px; overflow: hidden; }
+        .progress-fill { background: var(--green); height: 100%; border-radius: 99px; transition: width 0.4s cubic-bezier(.4,0,.2,1); }
+
+        /* Inputs */
+        .field { width: 100%; border: 1.5px solid #e2e8e4; padding: 14px 16px; border-radius: 14px; font-size: 13px; font-family: 'Montserrat', sans-serif; font-weight: 600; color: #222; background: #fafcfb; transition: border-color 0.2s, box-shadow 0.2s; }
+        .field:focus { border-color: var(--green); outline: none; box-shadow: 0 0 0 3px rgba(43,122,75,0.1); background: #fff; }
+        .field::placeholder { color: #aab5af; font-weight: 500; }
+
+        /* Select */
+        select.field { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%232b7a4b' d='M1 1l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 40px; }
+
+        /* Radio cards */
+        .radio-group { display: grid; gap: 10px; }
+        .radio-card input { display: none; }
+        .radio-card label { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border: 1.5px solid #e2e8e4; border-radius: 14px; cursor: pointer; font-size: 12px; font-weight: 700; color: #555; transition: all 0.2s; background: #fafcfb; }
+        .radio-card label:hover { border-color: var(--green); background: var(--green-light); color: var(--green); }
+        .radio-card input:checked + label { border-color: var(--green); background: var(--green-light); color: var(--green); }
+        .radio-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #ccc; flex-shrink: 0; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+        .radio-card input:checked + label .radio-dot { border-color: var(--green); background: var(--green); }
+        .radio-card input:checked + label .radio-dot::after { content: ''; width: 5px; height: 5px; background: #fff; border-radius: 50%; display: block; }
+
+        /* Urgencia badge */
+        .urgency-inmediato label { border-color: #f59e0b !important; }
+        .urgency-inmediato input:checked + label { background: #fffbeb !important; color: #b45309 !important; border-color: #f59e0b !important; }
+
+        /* Botones */
+        .btn-primary { width: 100%; background: var(--green); color: #fff; font-weight: 900; padding: 16px; border-radius: 14px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; border: none; cursor: pointer; transition: background 0.2s, transform 0.1s; font-family: 'Montserrat', sans-serif; }
+        .btn-primary:hover { background: var(--green-dark); }
+        .btn-primary:active { transform: scale(0.99); }
+        .btn-secondary { background: transparent; color: #999; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: none; cursor: pointer; font-family: 'Montserrat', sans-serif; padding: 8px; }
+        .btn-secondary:hover { color: #555; }
+
+        /* Label section */
+        .section-label { font-size: 9px; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; color: #aab5af; margin-bottom: 14px; display: block; }
+
+        /* Badge LEAD */
+        .badge-clean { background: #e8f5ee; color: var(--green); border: 1.5px solid var(--green); font-size: 9px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; padding: 4px 12px; border-radius: 99px; display: inline-block; }
+        .badge-sucio { background: #fff7ed; color: #b45309; border: 1.5px solid #f59e0b; font-size: 9px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; padding: 4px 12px; border-radius: 99px; display: inline-block; }
+
+        /* Ticket */
+        .ticket-border { border-top: 10px solid var(--green); }
+        .ticket-id { font-size: 28px; font-weight: 900; letter-spacing: -1px; color: #111; }
+        .ticket-dashes { border-top: 2px dashed #e2e8e4; margin: 20px 0; }
+
+        /* Loading */
+        .spinner { width: 40px; height: 40px; border: 3px solid #e8f5ee; border-top-color: var(--green); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Error */
+        .field-error { border-color: #ef4444 !important; }
+        .error-msg { color: #ef4444; font-size: 10px; font-weight: 700; margin-top: 4px; display: none; }
+        .error-msg.show { display: block; }
+    </style>
+</head>
+<body>
+<div class="min-h-screen flex flex-col items-center py-12 px-4 relative z-10">
+
+    <!-- Logo -->
+    <div class="mb-8 flex flex-col items-center">
+        <div class="logo-container">
+            <div class="leaf-icon">
+                <div class="leaf leaf-1"></div>
+                <div class="leaf leaf-2"></div>
+                <div class="leaf leaf-3"></div>
+            </div>
+            <div class="logo-text">Evobike</div>
+        </div>
+        <div class="logo-subtext">Llega a tu destino</div>
+    </div>
+
+    <div class="card w-full max-w-lg overflow-hidden">
+
+        <!-- HEADER fijo -->
+        <div id="form-header" class="px-8 pt-7 pb-5 border-b border-gray-50">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h2 class="text-sm font-black text-gray-900 uppercase tracking-tight">Registro de Distribuidor</h2>
+                    <p class="text-[10px] text-gray-400 font-semibold mt-0.5">Completa todos los campos para ser <span class="text-green-700 font-black">LEAD CLEAN ⭐</span></p>
+                </div>
+                <div id="step-badge" class="text-[10px] font-black text-gray-300 tracking-widest">1 / 3</div>
+            </div>
+            <!-- Progress -->
+            <div class="progress-track">
+                <div id="progress-fill" class="progress-fill" style="width: 33%"></div>
+            </div>
+        </div>
+
+        <!-- CONTENIDO MULTI-STEP -->
+        <div id="form-body" class="px-8 py-7">
+
+            <!-- STEP 1: Datos personales -->
+            <div class="step active" id="step-1">
+                <span class="section-label">Paso 1 — Datos de Contacto</span>
+                <div class="space-y-3">
+                    <div>
+                        <input type="text" id="nombre" class="field" placeholder="Nombre completo *">
+                        <p class="error-msg" id="err-nombre">Campo requerido</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <input type="tel" id="telefono" class="field" placeholder="WhatsApp (10 dígitos) *" maxlength="10">
+                            <p class="error-msg" id="err-telefono">Ingresa 10 dígitos</p>
+                        </div>
+                        <div>
+                            <input type="email" id="correo" class="field" placeholder="Correo electrónico *">
+                            <p class="error-msg" id="err-correo">Correo inválido</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <input type="text" id="cp" class="field" placeholder="C.P. *" maxlength="5">
+                            <p class="error-msg" id="err-cp">5 dígitos</p>
+                        </div>
+                        <div class="col-span-2">
+                            <input type="text" id="ubicacion" class="field" placeholder="Ciudad y Estado *">
+                            <p class="error-msg" id="err-ubicacion">Campo requerido</p>
+                        </div>
+                    </div>
+                    <div>
+                        <input type="text" id="rfc" class="field" placeholder="RFC / Razón Social (opcional)">
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <button class="btn-primary" onclick="goToStep(2)">Continuar →</button>
+                </div>
+            </div>
+
+            <!-- STEP 2: Perfil de negocio -->
+            <div class="step" id="step-2">
+                <span class="section-label">Paso 2 — Perfil de Negocio</span>
+                <div class="space-y-5">
+
+                    <div>
+                        <p class="text-[11px] font-bold text-gray-500 mb-2">¿Tienes local o punto de venta? *</p>
+                        <div class="radio-group grid-cols-1">
+                            <div class="radio-card">
+                                <input type="radio" name="local" id="local-si" value="Sí, tengo local propio">
+                                <label for="local-si"><span class="radio-dot"></span> Sí, tengo local propio</label>
+                            </div>
+                            <div class="radio-card">
+                                <input type="radio" name="local" id="local-renta" value="Sí, rentado o compartido">
+                                <label for="local-renta"><span class="radio-dot"></span> Sí, rentado o compartido</label>
+                            </div>
+                            <div class="radio-card">
+                                <input type="radio" name="local" id="local-no" value="No, operaría desde casa o en línea">
+                                <label for="local-no"><span class="radio-dot"></span> No, operaría desde casa / en línea</label>
+                            </div>
+                        </div>
+                        <p class="error-msg" id="err-local">Selecciona una opción</p>
+                    </div>
+
+                    <div>
+                        <p class="text-[11px] font-bold text-gray-500 mb-2">Capital disponible para invertir *</p>
+                        <div class="radio-group grid-cols-1">
+                            <div class="radio-card">
+                                <input type="radio" name="capital" id="cap-1" value="Menos de $50,000">
+                                <label for="cap-1"><span class="radio-dot"></span> Menos de $50,000 MXN</label>
+                            </div>
+                            <div class="radio-card">
+                                <input type="radio" name="capital" id="cap-2" value="$50,000 - $150,000">
+                                <label for="cap-2"><span class="radio-dot"></span> $50,000 — $150,000 MXN</label>
+                            </div>
+                            <div class="radio-card">
+                                <input type="radio" name="capital" id="cap-3" value="$150,000 - $300,000">
+                                <label for="cap-3"><span class="radio-dot"></span> $150,000 — $300,000 MXN</label>
+                            </div>
+                            <div class="radio-card">
+                                <input type="radio" name="capital" id="cap-4" value="Más de $300,000">
+                                <label for="cap-4"><span class="radio-dot"></span> Más de $300,000 MXN</label>
+                            </div>
+                        </div>
+                        <p class="error-msg" id="err-capital">Selecciona una opción</p>
+                    </div>
+
+                    <div>
+                        <p class="text-[11px] font-bold text-gray-500 mb-2">Experiencia en ventas *</p>
+                        <div class="radio-group grid-cols-1">
+                            <div class="radio-card">
+                                <input type="radio" name="experiencia" id="exp-0" value="Sin experiencia">
+                                <label for="exp-0"><span class="radio-dot"></span> Sin experiencia previa</label>
+                            </div>
+                            <div class="radio-card">
+                                <input type="radio" name="experiencia" id="exp-1" value="1-3 años">
+                                <label for="exp-1"><span class="radio-dot"></span> 1 a 3 años vendiendo</label>
+                            </div>
+                            <div class="radio-card">
+                                <input type="radio" name="experiencia" id="exp-2" value="Más de 3 años">
+                                <label for="exp-2"><span class="radio-dot"></span> Más de 3 años de experiencia</label>
+                            </div>
+                            <div class="radio-card">
+                                <input type="radio" name="experiencia" id="exp-3" value="Tengo negocio activo">
+                                <label for="exp-3"><span class="radio-dot"></span> Ya tengo negocio activo</label>
+                            </div>
+                        </div>
+                        <p class="error-msg" id="err-experiencia">Selecciona una opción</p>
+                    </div>
+                </div>
+                <div class="mt-6 flex flex-col gap-2">
+                    <button class="btn-primary" onclick="goToStep(3)">Continuar →</button>
+                    <button class="btn-secondary" onclick="goToStep(1)">← Atrás</button>
+                </div>
+            </div>
+
+            <!-- STEP 3: Intención y modelo -->
+            <div class="step" id="step-3">
+                <span class="section-label">Paso 3 — Intención de Distribución</span>
+                <div class="space-y-5">
+
+                    <div>
+                        <p class="text-[11px] font-bold text-gray-500 mb-2">¿En qué plazo planeas iniciar? *</p>
+                        <div class="radio-group grid-cols-1">
+                            <div class="radio-card urgency-inmediato">
+                                <input type="radio" name="tiempo" id="t-inmediato" value="Inmediato (0-3 meses)">
+                                <label for="t-inmediato"><span class="radio-dot"></span> 🔥 Inmediato — listo en 0 a 3 meses</label>
+                            </div>
+                            <div class="radio-card">
+                                <input type="radio" name="tiempo" id="t-3m" value="En 3 meses">
+                                <label for="t-3m"><span class="radio-dot"></span> En 3 meses</label>
+                            </div>
+                            <div class="radio-card">
+                                <input type="radio" name="tiempo" id="t-6m" value="En 6 meses">
+                                <label for="t-6m"><span class="radio-dot"></span> En 6 meses</label>
+                            </div>
+                            <div class="radio-card">
+                                <input type="radio" name="tiempo" id="t-1a" value="En 1 año">
+                                <label for="t-1a"><span class="radio-dot"></span> En 1 año</label>
+                            </div>
+                            <div class="radio-card">
+                                <input type="radio" name="tiempo" id="t-curioso" value="Solo estoy curoseando">
+                                <label for="t-curioso"><span class="radio-dot"></span> Solo estoy curioseando</label>
+                            </div>
+                        </div>
+                        <p class="error-msg" id="err-tiempo">Selecciona una opción</p>
+                    </div>
+
+                    <div>
+                        <p class="text-[11px] font-bold text-gray-500 mb-2">Modelo de distribución de interés *</p>
+                        <select id="tipoDistribuidor" class="field">
+                            <option value="" disabled selected>Selecciona un modelo...</option>
+                            <option value="MAYORISTA">MAYORISTA</option>
+                            <option value="DISTRIBUIDOR NO FIRMADO">DISTRIBUIDOR NO FIRMADO</option>
+                            <option value="DISTRIBUIDOR FIRMADO (APERTURA DE SUCURSAL)">DISTRIBUIDOR FIRMADO (APERTURA DE SUCURSAL)</option>
+                        </select>
+                        <p class="error-msg" id="err-tipo">Selecciona un modelo</p>
+                    </div>
+                </div>
+                <div class="mt-6 flex flex-col gap-2">
+                    <button class="btn-primary" onclick="submitForm()">Obtener mi Ticket de Bonificacion⭐</button>
+                    <button class="btn-secondary" onclick="goToStep(2)">← Atrás</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- LOADING -->
+        <div id="loading-screen" class="hidden px-8 py-20 text-center">
+            <div class="spinner mb-5"></div>
+            <p class="text-[10px] font-black text-gray-300 uppercase tracking-widest">Registrando en base de datos...</p>
+        </div>
+
+        <!-- TICKET CLEAN -->
+        <div id="ticket-clean" class="hidden ticket-border px-10 py-10 text-center">
+            <div class="flex justify-center mb-5">
+                <div class="logo-container">
+                    <div class="leaf-icon" style="transform:scale(0.8)">
+                        <div class="leaf leaf-1"></div><div class="leaf leaf-2"></div><div class="leaf leaf-3"></div>
+                    </div>
+                    <div class="logo-text" style="font-size:22px">Evobike</div>
+                </div>
+            </div>
+            <span class="badge-clean mb-4 inline-block">⭐ Lead Clean — Partner Pass</span>
+            <div id="qrcode" class="mx-auto my-5 inline-block p-2 border border-gray-100 rounded-xl bg-white"></div>
+            <div class="ticket-dashes"></div>
+            <p id="display-ticket-id" class="ticket-id mb-1"></p>
+            <p id="display-nombre" class="text-xs font-bold text-gray-500 mb-4 uppercase tracking-widest"></p>
+            <p class="text-[10px] text-gray-400 max-w-xs mx-auto font-bold leading-relaxed uppercase">Presenta este código en la <span class="text-black">Sucursal Matriz</span> para validar tu bono de inicio.</p>
+            <button onclick="window.print()" class="mt-8 text-[9px] font-bold text-gray-300 hover:text-gray-500 uppercase tracking-widest">Imprimir Ticket</button>
+        </div>
+
+        <!-- TICKET SUCIO (no llenó todo) -->
+        <div id="ticket-sucio" class="hidden px-10 py-10 text-center border-t-[10px] border-amber-400">
+            <div class="text-4xl mb-4">📋</div>
+            <span class="badge-sucio mb-4 inline-block">Prospecto Registrado</span>
+            <p class="text-sm font-black text-gray-700 mt-4 mb-2">¡Gracias por tu interés!</p>
+            <p class="text-[11px] text-gray-400 max-w-xs mx-auto font-semibold leading-relaxed">Tu solicitud fue recibida. Un asesor Evobike se pondrá en contacto contigo pronto para completar tu perfil.</p>
+            <p id="display-ticket-sucio" class="text-lg font-black text-gray-300 mt-6 tracking-widest"></p>
+        </div>
+
+    </div>
+
+    <p class="mt-8 text-[9px] text-gray-400 uppercase tracking-[0.4em] font-bold">Evobike Expansión México © 2026</p>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbww5dYvE1cNJA7yJ1XPtljSOLdZxiNecvyaOJGgu34JQCWkKAULpRnIfFdYUnZa2tMAvQ/exec";
+
+    let currentStep = 1;
+    const totalSteps = 3;
+
+    // ── Navegación de pasos ──────────────────────────────────────────
+    function goToStep(step) {
+        if (step > currentStep && !validateStep(currentStep)) return;
+
+        document.getElementById(`step-${currentStep}`).classList.remove('active');
+        currentStep = step;
+        document.getElementById(`step-${currentStep}`).classList.add('active');
+
+        // Actualizar progress
+        const pct = (step / totalSteps) * 100;
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('step-badge').textContent = `${step} / ${totalSteps}`;
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── Validaciones por paso ────────────────────────────────────────
+    function validateStep(step) {
+        let valid = true;
+
+        if (step === 1) {
+            valid = checkRequired('nombre', 'err-nombre') && valid;
+            valid = checkPhone('telefono', 'err-telefono') && valid;
+            valid = checkEmail('correo', 'err-correo') && valid;
+            valid = checkCP('cp', 'err-cp') && valid;
+            valid = checkRequired('ubicacion', 'err-ubicacion') && valid;
+        }
+
+        if (step === 2) {
+            valid = checkRadio('local', 'err-local') && valid;
+            valid = checkRadio('capital', 'err-capital') && valid;
+            valid = checkRadio('experiencia', 'err-experiencia') && valid;
+        }
+
+        if (step === 3) {
+            valid = checkRadio('tiempo', 'err-tiempo') && valid;
+            valid = checkSelect('tipoDistribuidor', 'err-tipo') && valid;
+        }
+
+        return valid;
+    }
+
+    function checkRequired(id, errId) {
+        const val = document.getElementById(id).value.trim();
+        const ok = val.length > 0;
+        toggleError(id, errId, ok);
+        return ok;
+    }
+    function checkPhone(id, errId) {
+        const val = document.getElementById(id).value.trim();
+        const ok = /^[0-9]{10}$/.test(val);
+        toggleError(id, errId, ok);
+        return ok;
+    }
+    function checkEmail(id, errId) {
+        const val = document.getElementById(id).value.trim();
+        const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+        toggleError(id, errId, ok);
+        return ok;
+    }
+    function checkCP(id, errId) {
+        const val = document.getElementById(id).value.trim();
+        const ok = /^[0-9]{5}$/.test(val);
+        toggleError(id, errId, ok);
+        return ok;
+    }
+    function checkRadio(name, errId) {
+        const selected = document.querySelector(`input[name="${name}"]:checked`);
+        const ok = !!selected;
+        document.getElementById(errId).classList.toggle('show', !ok);
+        return ok;
+    }
+    function checkSelect(id, errId) {
+        const val = document.getElementById(id).value;
+        const ok = val !== '';
+        toggleError(id, errId, ok);
+        return ok;
+    }
+    function toggleError(fieldId, errId, ok) {
+        const field = document.getElementById(fieldId);
+        field.classList.toggle('field-error', !ok);
+        document.getElementById(errId).classList.toggle('show', !ok);
+    }
+
+    // ── Limpiar errores al escribir ──────────────────────────────────
+    ['nombre','telefono','correo','cp','ubicacion'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+            document.getElementById(id).classList.remove('field-error');
+            const errEl = document.getElementById('err-' + id);
+            if (errEl) errEl.classList.remove('show');
+        });
+    });
+
+    // ── Determinar si es LEAD CLEAN ──────────────────────────────────
+    function isLeadClean() {
+        const tiempo = document.querySelector('input[name="tiempo"]:checked')?.value || '';
+        const capital = document.querySelector('input[name="capital"]:checked')?.value || '';
+        // LEAD SUCIO si solo está curioseando O capital menor de 50k
+        if (tiempo === 'Solo estoy curoseando') return false;
+        if (capital === 'Menos de $50,000') return false;
+        return true;
+    }
+
+    // ── Envío del formulario ─────────────────────────────────────────
+    async function submitForm() {
+        if (!validateStep(3)) return;
+
+        const leadClean = isLeadClean();
+        const ticketId = (leadClean ? "EVO-" : "PRO-") + Math.random().toString(36).substr(2, 6).toUpperCase();
+        const estadoLead = leadClean ? "LEAD CLEAN" : "LEAD SUCIO";
+
+        // Ocultar form, mostrar loading
+        document.getElementById('form-header').classList.add('hidden');
+        document.getElementById('form-body').classList.add('hidden');
+        document.getElementById('loading-screen').classList.remove('hidden');
+
+        const params = new URLSearchParams({
+            nombre:           document.getElementById('nombre').value.trim(),
+            telefono:         document.getElementById('telefono').value.trim(),
+            correo:           document.getElementById('correo').value.trim(),
+            cp:               document.getElementById('cp').value.trim(),
+            ubicacion:        document.getElementById('ubicacion').value.trim(),
+            rfc:              document.getElementById('rfc').value.trim(),
+            local:            document.querySelector('input[name="local"]:checked')?.value || '',
+            capital:          document.querySelector('input[name="capital"]:checked')?.value || '',
+            experiencia:      document.querySelector('input[name="experiencia"]:checked')?.value || '',
+            tiempoIniciacion: document.querySelector('input[name="tiempo"]:checked')?.value || '',
+            tipoDistribuidor: document.getElementById('tipoDistribuidor').value,
+            ticketId:         ticketId,
+            estadoLead:       estadoLead,
+            procedencia:      new URLSearchParams(window.location.search).get('utm_source') || 'FB Ads Oficial'
+        });
+
+        try {
+            const response = await fetch(`${SCRIPT_URL}?${params.toString()}`);
+            const result = await response.json();
+
+            document.getElementById('loading-screen').classList.add('hidden');
+
+            if (result.status === "ok") {
+                if (leadClean) {
+                    // Mostrar ticket CLEAN
+                    document.getElementById('ticket-clean').classList.remove('hidden');
+                    document.getElementById('display-ticket-id').innerText = ticketId;
+                    document.getElementById('display-nombre').innerText = document.getElementById('nombre').value.trim();
+
+                    new QRCode(document.getElementById("qrcode"), {
+                        text: `https://evobike.com.mx/validar?id=${ticketId}`,
+                        width: 140, height: 140,
+                        colorDark: "#1a1a1a", colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                } else {
+                    // Mostrar ticket SUCIO
+                    document.getElementById('ticket-sucio').classList.remove('hidden');
+                    document.getElementById('display-ticket-sucio').innerText = ticketId;
+                }
+            } else {
+                throw new Error(result.message || "Error en el servidor");
+            }
+
+        } catch (error) {
+            console.error("Error:", error);
+            alert("⚠️ Error de conexión. Inténtalo de nuevo.");
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('form-header').classList.remove('hidden');
+            document.getElementById('form-body').classList.remove('hidden');
+        }
+    }
+</script>
+</body>
+</html>
